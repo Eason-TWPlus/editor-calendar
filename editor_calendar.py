@@ -32,7 +32,9 @@ st.markdown("""
 
 # Google Sheets 連線
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("google_credentials.json", scope)
+import json
+google_json = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+creds = ServiceAccountCredentials.from_json_keyfile_dict(google_json, scope)
 client = gspread.authorize(creds)
 
 SHEET_NAME = "Editor Calendar"
