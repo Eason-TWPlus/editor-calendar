@@ -98,7 +98,7 @@ color_map = {
 events = []
 for _, row in tasks_df.iterrows():
     if pd.notnull(row["StartDate"]) and pd.notnull(row["EndDate"]):
-        title = f'{row["Project"]} - {row["Editor"]} (Ep. {row["Episode"]})'
+        title = f'{row["Project"]} (Ep. {row["Episode"]}) - {row["Editor"]}'
         start = row["StartDate"]
         end = row["EndDate"] + timedelta(days=1)  # FullCalendar end date is exclusive
         color = color_map.get(row["Editor"], "#DBD7D7")  # 使用 Unknown 的顏色作為預設
