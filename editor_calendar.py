@@ -10,6 +10,28 @@ import uuid
 st.set_page_config(layout="wide")
 st.title("🎬 剪輯任務日程")
 
+# 顏色圖例（剪輯師 Color Legend）
+st.markdown("""
+<div style='display: flex; gap: 20px; margin-top: 10px; margin-bottom: 20px;'>
+    <div style='display: flex; align-items: center; gap: 5px;'>
+        <div style='width: 15px; height: 15px; background-color: #91D4C2; border-radius: 3px;'></div>
+        <span style='font-size: 14px;'>Dolphine</span>
+    </div>
+    <div style='display: flex; align-items: center; gap: 5px;'>
+        <div style='width: 15px; height: 15px; background-color: #FED880; border-radius: 3px;'></div>
+        <span style='font-size: 14px;'>Eason</span>
+    </div>
+    <div style='display: flex; align-items: center; gap: 5px;'>
+        <div style='width: 15px; height: 15px; background-color: #85B8CB; border-radius: 3px;'></div>
+        <span style='font-size: 14px;'>James</span>
+    </div>
+    <div style='display: flex; align-items: center; gap: 5px;'>
+        <div style='width: 15px; height: 15px; background-color: #DBD7D7; border-radius: 3px;'></div>
+        <span style='font-size: 14px;'>Unknown</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 # 注入自定義 CSS 僅用於按鈕顏色
 st.markdown("""
     <style>
