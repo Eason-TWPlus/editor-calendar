@@ -88,9 +88,9 @@ if not invalid_dates.empty:
 
 # 顏色對應（剪輯師）
 color_map = {
-    "Dolphine": "#91D4C2",
-    "Eason": "#FED880",
-    "James": "#85B8CB",
+    "Dolphine": "#F7C3D6",
+    "Eason": "#FFEC96",
+    "James": "#ADFFF5",
     "Unknown": "#DBD7D7"
 }
 
