@@ -35,18 +35,18 @@ st.markdown("""
 # 注入自定義 CSS 僅用於按鈕顏色
 st.markdown("""
     <style>
-    .fc .fc-button {
-        background-color: #007BFF !important;
+    .fc-toolbar .fc-button {
+        background-color: #0f0f0f !important;
         color: #FFFFFF !important;
         border: none !important;
-        border-radius: 5px;
-        padding: 5px 10px;
-        font-weight: bold;
+        border-radius: 5px !important;
+        padding: 5px 10px !important;
+        font-weight: bold !important;
     }
-    .fc .fc-button:hover {
-        background-color: #0056b3 !important;
+    .fc-toolbar .fc-button:hover {
+        background-color: #DBD7D7 !important;
     }
-    .fc .fc-button:focus {
+    .fc-toolbar .fc-button:focus {
         box-shadow: none !important;
     }
     </style>
