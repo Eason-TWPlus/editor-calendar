@@ -14,15 +14,15 @@ st.title("🎬 剪輯任務日程")
 st.markdown("""
 <div style='display: flex; gap: 20px; margin-top: 10px; margin-bottom: 20px;'>
     <div style='display: flex; align-items: center; gap: 5px;'>
-        <div style='width: 15px; height: 15px; background-color: #91D4C2; border-radius: 3px;'></div>
+        <div style='width: 15px; height: 15px; background-color: #F7C3D6; border-radius: 3px;'></div>
         <span style='font-size: 14px;'>Dolphine</span>
     </div>
     <div style='display: flex; align-items: center; gap: 5px;'>
-        <div style='width: 15px; height: 15px; background-color: #FED880; border-radius: 3px;'></div>
+        <div style='width: 15px; height: 15px; background-color: #edd97e; border-radius: 3px;'></div>
         <span style='font-size: 14px;'>Eason</span>
     </div>
     <div style='display: flex; align-items: center; gap: 5px;'>
-        <div style='width: 15px; height: 15px; background-color: #85B8CB; border-radius: 3px;'></div>
+        <div style='width: 15px; height: 15px; background-color: #80b3ff; border-radius: 3px;'></div>
         <span style='font-size: 14px;'>James</span>
     </div>
     <div style='display: flex; align-items: center; gap: 5px;'>
