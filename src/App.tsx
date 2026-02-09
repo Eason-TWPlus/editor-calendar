@@ -5,14 +5,12 @@ import { COLOR_OPTIONS } from './types';
 import type { Task, Program, Editor } from './types';
 import { 
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
-  eachDayOfInterval, isSameDay, parseISO, isWithinInterval, 
-  addMonths, subMonths, // 🔥 重新啟用：用於左右切換
-  isToday, isBefore, isAfter, startOfDay 
+  eachDayOfInterval, isSameDay, parseISO, isWithinInterval, addMonths, subMonths, isToday, isBefore, isAfter, startOfDay 
 } from 'date-fns';
+import { zhTW } from 'date-fns/locale';
 import { 
-  BarChart3, Settings, Plus, 
-  ChevronLeft, ChevronRight, // 🔥 重新啟用：箭頭圖示
-  Trash2, X, User, LayoutGrid, CheckCircle2, Clock, PlayCircle, Edit3, Film, Tv, Monitor, StickyNote, Calendar as CalendarIcon, RotateCcw
+  BarChart3, Settings, Plus, ChevronLeft, ChevronRight, 
+  Trash2, X, User, LayoutGrid, CheckCircle2, Clock, PlayCircle, Edit3, Film, Tv, Monitor, StickyNote, Calendar as CalendarIcon, RotateCcw, Menu
 } from 'lucide-react';
 
 // --- 安全設定 ---
@@ -35,7 +33,6 @@ const getTheme = (colorString: string | undefined) => {
   return { pill: "bg-slate-100 text-slate-600", bar: "bg-slate-500", border: "border-slate-200" };
 };
 
-// --- 動畫進度條 ---
 const AnimatedBar = ({ width, colorClass }: { width: number, colorClass: string }) => {
   const [currentWidth, setCurrentWidth] = useState(0);
   useEffect(() => {
@@ -45,7 +42,6 @@ const AnimatedBar = ({ width, colorClass }: { width: number, colorClass: string 
   return <div className={`h-full rounded-full transition-all duration-1000 ease-out ${colorClass}`} style={{ width: `${currentWidth}%` }}></div>;
 };
 
-// --- 動畫數字 ---
 const NumberTicker = ({ value }: { value: number }) => {
   const [displayValue, setDisplayValue] = useState(0);
   useEffect(() => {
@@ -73,6 +69,9 @@ function App() {
   const [statsDate, setStatsDate] = useState(new Date()); 
   const [view, setView] = useState<'calendar' | 'stats' | 'manage'>('calendar');
   
+  // 🔥 新增：手機版側邊欄開關狀態
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Partial<Task>>({});
   const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
@@ -179,37 +178,68 @@ function App() {
 
   return (
     <div className="min-h-screen flex bg-white text-slate-700 font-sans selection:bg-slate-200">
-      <aside className="w-20 bg-white border-r border-slate-100 flex flex-col items-center py-6 gap-4 z-50 shrink-0 shadow-lg">
+      
+      {/* 🔥 1. 手機版遮罩 (Overlay) 
+        當選單打開時，背景變黑，點擊空白處關閉
+      */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden animate-in fade-in duration-200"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* 🔥 2. 響應式側邊欄 (Sidebar)
+        - 手機 (md:hidden): 預設隱藏，使用 -translate-x-full 移出畫面
+        - 電腦 (md:block): 永遠顯示，不做動畫
+      */}
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-50 w-64 md:w-20 
+        bg-white border-r border-slate-100 flex flex-col items-center py-6 gap-4 shadow-2xl md:shadow-lg
+        transition-transform duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         <div className="w-10 h-10 mb-4 flex items-center justify-center"><span className="font-black text-xl tracking-tighter text-slate-800">EF.</span></div>
         <nav className="flex flex-col gap-4 w-full px-2">
-          <NavBtn icon={<LayoutGrid size={24} />} label="Calendar" active={view === 'calendar'} onClick={() => setView('calendar')} />
-          <NavBtn icon={<BarChart3 size={24} />} label="Insights" active={view === 'stats'} onClick={() => setView('stats')} />
+          <NavBtn icon={<LayoutGrid size={24} />} label="Calendar" active={view === 'calendar'} onClick={() => { setView('calendar'); setIsMobileMenuOpen(false); }} />
+          <NavBtn icon={<BarChart3 size={24} />} label="Insights" active={view === 'stats'} onClick={() => { setView('stats'); setIsMobileMenuOpen(false); }} />
           <div className="flex-1"></div>
-          <NavBtn icon={<Settings size={24} />} label="Settings" active={view === 'manage'} onClick={() => setView('manage')} />
+          <NavBtn icon={<Settings size={24} />} label="Settings" active={view === 'manage'} onClick={() => { setView('manage'); setIsMobileMenuOpen(false); }} />
         </nav>
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-40 shrink-0">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800">
-            {view === 'calendar' && "Production Calendar"}
-            {view === 'stats' && "Insights"}
-            {view === 'manage' && "System Management"}
-          </h1>
+        <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 sticky top-0 z-30 shrink-0">
           
-          {/* 🔥 修正：行事曆導航 (今天 | < 選單 >) */}
+          <div className="flex items-center gap-3">
+            {/* 🔥 3. 漢堡選單按鈕 (只在手機出現) */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-50 rounded-lg"
+            >
+              <Menu size={24} />
+            </button>
+
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-800 truncate max-w-[200px] md:max-w-none">
+              {view === 'calendar' && "Production"}
+              {view === 'stats' && "Insights"}
+              {view === 'manage' && "Settings"}
+            </h1>
+          </div>
+          
+          {/* 行事曆導航 */}
           {view === 'calendar' && (
-            <div className="flex items-center gap-3">
-              <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-bold transition-colors flex items-center gap-1">
+            <div className="flex items-center gap-2 md:gap-3">
+              <button onClick={() => setCurrentDate(new Date())} className="hidden md:flex px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-bold transition-colors items-center gap-1">
                 <RotateCcw size={14}/> Today
               </button>
               <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100 shadow-sm">
                 <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-1.5 hover:bg-white rounded text-slate-500 transition-colors"><ChevronLeft size={16}/></button>
                 <div className="relative group">
-                   <CalendarIcon size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                   <CalendarIcon size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none hidden md:block" />
                    <input 
                     type="month" 
-                    className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer pl-7 pr-1 py-1 w-32"
+                    className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer pl-1 md:pl-7 pr-1 py-1 w-24 md:w-32"
                     value={format(currentDate, 'yyyy-MM')}
                     onChange={(e) => e.target.value && setCurrentDate(parseISO(e.target.value))}
                   />
@@ -221,53 +251,66 @@ function App() {
         </header>
 
         <div className="flex-1 overflow-y-auto relative scroll-smooth z-0">
+          
+          {/* --- A. 行事曆 --- */}
           {view === 'calendar' && (
             <div className="flex flex-col h-full bg-white">
-              <div className="grid grid-cols-7 border-b border-slate-100 sticky top-0 bg-white z-10">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => <div key={d} className="py-3 text-center text-[11px] font-medium text-slate-400 uppercase tracking-widest">{d}</div>)}
-              </div>
-              <div className="flex-1 grid grid-cols-7 auto-rows-fr bg-slate-50/30">
-                {calendarDays.map((day) => {
-                  const todaysTasks = tasks.filter(t => isWithinInterval(day, { start: parseISO(t.startDate), end: parseISO(t.endDate) }));
-                  const maxRowIndex = todaysTasks.reduce((max, t) => Math.max(max, taskLayout[t.id] || 0), -1);
-                  const isCurrentMonth = format(day, 'M') === format(currentDate, 'M');
-                  return (
-                    <div key={day.toISOString()} onClick={() => { setEditingTask({ startDate: format(day, 'yyyy-MM-dd'), endDate: format(day, 'yyyy-MM-dd') }); setIsTaskModalOpen(true); }} className={`border-b border-r border-slate-100 min-h-32 p-0 flex flex-col ${!isCurrentMonth ? 'bg-slate-50/80 text-slate-300' : 'bg-white hover:bg-slate-50'}`}>
-                      <div className="p-1.5 flex justify-center pointer-events-none"><span className={`w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-semibold ${isToday(day) ? 'bg-slate-800 text-white' : isCurrentMonth ? 'text-slate-500' : ''}`}>{format(day, 'd')}</span></div>
-                      <div className="flex flex-col w-full relative pb-1"> 
-                        {Array.from({ length: Math.max(maxRowIndex + 1, 0) }).map((_, rowIndex) => {
-                          const task = todaysTasks.find(t => taskLayout[t.id] === rowIndex);
-                          if (!task) return <div key={`spacer-${rowIndex}`} className="h-7 w-full mb-0.5"></div>;
-                          const editorData = getEditorData(task.editor);
-                          const theme = getTheme(editorData.color);
-                          const isStart = isSameDay(day, parseISO(task.startDate));
-                          const isEnd = isSameDay(day, parseISO(task.endDate));
-                          const status = getTaskStatus(task);
-                          let shapeClass = isStart && isEnd ? 'rounded mx-1.5' : isStart ? 'rounded-l -mr-px ml-1.5' : isEnd ? 'rounded-r -ml-px mr-1.5' : 'rounded-none -mx-px';
-                          const statusClass = status === 'completed' ? 'shadow-none opacity-100' : 'shadow-sm opacity-100';
-                          return (
-                            <div key={task.id} onClick={(e) => { e.stopPropagation(); setEditingTask(task); setIsTaskModalOpen(true); }} className={`relative h-7 text-[10px] px-2 flex items-center cursor-pointer truncate transition-all hover:brightness-95 z-10 mb-0.5 ${theme.pill} ${shapeClass} ${statusClass}`} title={`${task.show} #${task.episode} ${task.note ? `| 備註: ${task.note}` : ''}`}>
-                              {(isStart || format(day, 'E') === 'Mon') && (
-                                <div className="flex items-center gap-1 font-medium truncate w-full">
-                                  {status === 'active' && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>}
-                                  {status === 'completed' && <CheckCircle2 size={10} />}
-                                  {task.note && <StickyNote size={10} className="opacity-70" />}
-                                  <span className="truncate">{task.show} #{task.episode}</span>
+              {/* 🔥 4. 強制水平捲動容器：讓行事曆在手機上不會變形 */}
+              <div className="flex-1 overflow-auto">
+                <div className="min-w-[800px] h-full flex flex-col"> {/* 設定最小寬度 800px */}
+                  
+                  <div className="grid grid-cols-7 border-b border-slate-100 sticky top-0 bg-white z-10">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => <div key={d} className="py-3 text-center text-[11px] font-medium text-slate-400 uppercase tracking-widest">{d}</div>)}
+                  </div>
+                  
+                  <div className="flex-1 grid grid-cols-7 auto-rows-fr bg-slate-50/30">
+                    {calendarDays.map((day) => {
+                      const todaysTasks = tasks.filter(t => isWithinInterval(day, { start: parseISO(t.startDate), end: parseISO(t.endDate) }));
+                      const maxRowIndex = todaysTasks.reduce((max, t) => Math.max(max, taskLayout[t.id] || 0), -1);
+                      const isCurrentMonth = format(day, 'M') === format(currentDate, 'M');
+                      return (
+                        <div key={day.toISOString()} onClick={() => { setEditingTask({ startDate: format(day, 'yyyy-MM-dd'), endDate: format(day, 'yyyy-MM-dd') }); setIsTaskModalOpen(true); }} className={`border-b border-r border-slate-100 min-h-32 p-0 flex flex-col ${!isCurrentMonth ? 'bg-slate-50/80 text-slate-300' : 'bg-white hover:bg-slate-50'}`}>
+                          <div className="p-1.5 flex justify-center pointer-events-none"><span className={`w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-semibold ${isToday(day) ? 'bg-slate-800 text-white' : isCurrentMonth ? 'text-slate-500' : ''}`}>{format(day, 'd')}</span></div>
+                          <div className="flex flex-col w-full relative pb-1"> 
+                            {Array.from({ length: Math.max(maxRowIndex + 1, 0) }).map((_, rowIndex) => {
+                              const task = todaysTasks.find(t => taskLayout[t.id] === rowIndex);
+                              if (!task) return <div key={`spacer-${rowIndex}`} className="h-7 w-full mb-0.5"></div>;
+                              
+                              const editorData = getEditorData(task.editor);
+                              const theme = getTheme(editorData.color);
+                              const isStart = isSameDay(day, parseISO(task.startDate));
+                              const isEnd = isSameDay(day, parseISO(task.endDate));
+                              const status = getTaskStatus(task);
+                              
+                              let shapeClass = isStart && isEnd ? 'rounded mx-1.5' : isStart ? 'rounded-l -mr-px ml-1.5' : isEnd ? 'rounded-r -ml-px mr-1.5' : 'rounded-none -mx-px';
+                              const statusClass = status === 'completed' ? 'shadow-none opacity-100' : 'shadow-sm opacity-100';
+
+                              return (
+                                <div key={task.id} onClick={(e) => { e.stopPropagation(); setEditingTask(task); setIsTaskModalOpen(true); }} className={`relative h-7 text-[10px] px-2 flex items-center cursor-pointer truncate transition-all hover:brightness-95 z-10 mb-0.5 ${theme.pill} ${shapeClass} ${statusClass}`} title={`${task.show} #${task.episode} ${task.note ? `| 備註: ${task.note}` : ''}`}>
+                                  {(isStart || format(day, 'E') === 'Mon') && (
+                                    <div className="flex items-center gap-1 font-medium truncate w-full">
+                                      {status === 'active' && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>}
+                                      {status === 'completed' && <CheckCircle2 size={10} />}
+                                      {task.note && <StickyNote size={10} className="opacity-70" />}
+                                      <span className="truncate">{task.show} #{task.episode}</span>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
+          {/* --- B. 數據統計 --- */}
           {view === 'stats' && (
-            <div className="p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+            <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
               <div>
                 <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><Film className="text-slate-400"/> 歷史總覽 (Total)</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -282,9 +325,9 @@ function App() {
                       <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-4">Total Workload by Editor</p>
                       <div className="flex gap-2 flex-wrap">
                         {displayEditors.map(e => (
-                          <div key={e.id} className="flex flex-col items-center p-3 bg-slate-50 rounded-lg min-w-20">
+                          <div key={e.id} className="flex flex-col items-center p-3 bg-slate-50 rounded-lg min-w-20 flex-1">
                             <span className="text-2xl font-bold text-slate-700"><NumberTicker value={stats.totalWorkload[e.name] || 0} /></span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase mt-1">{e.name}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase mt-1 text-center truncate w-full">{e.name}</span>
                           </div>
                         ))}
                       </div>
@@ -295,25 +338,18 @@ function App() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Clock className="text-slate-400"/> 月度概況 (Monthly)</h2>
-                  
-                  {/* 🔥 修正：數據頁面導航 (今天 | < 選單 >) */}
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setStatsDate(new Date())} className="px-3 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold transition-colors flex items-center gap-1 shadow-sm">
-                      <RotateCcw size={14}/> Today
-                    </button>
-                    <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                      <button onClick={() => setStatsDate(subMonths(statsDate, 1))} className="p-1.5 hover:bg-slate-50 rounded text-slate-500 transition-colors"><ChevronLeft size={16}/></button>
-                      <div className="relative group">
-                        <CalendarIcon size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                        <input 
-                          type="month" 
-                          className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer pl-7 pr-1 py-1 w-32"
-                          value={format(statsDate, 'yyyy-MM')}
-                          onChange={(e) => e.target.value && setStatsDate(parseISO(e.target.value))}
-                        />
-                      </div>
-                      <button onClick={() => setStatsDate(addMonths(statsDate, 1))} className="p-1.5 hover:bg-slate-50 rounded text-slate-500 transition-colors"><ChevronRight size={16}/></button>
+                  <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                    <button onClick={() => setStatsDate(subMonths(statsDate, 1))} className="p-1.5 hover:bg-slate-50 rounded text-slate-500 transition-colors"><ChevronLeft size={16}/></button>
+                    <div className="relative group">
+                      <CalendarIcon size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none hidden md:block" />
+                      <input 
+                        type="month" 
+                        className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer pl-1 md:pl-7 pr-1 py-1 w-24 md:w-32"
+                        value={format(statsDate, 'yyyy-MM')}
+                        onChange={(e) => e.target.value && setStatsDate(parseISO(e.target.value))}
+                      />
                     </div>
+                    <button onClick={() => setStatsDate(addMonths(statsDate, 1))} className="p-1.5 hover:bg-slate-50 rounded text-slate-500 transition-colors"><ChevronRight size={16}/></button>
                   </div>
                 </div>
 
@@ -352,21 +388,21 @@ function App() {
           )}
 
           {view === 'manage' && (
-            <div className="p-8 max-w-5xl mx-auto space-y-8">
+            <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8">
               <h2 className="text-2xl font-bold text-slate-800">System Management</h2>
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><h3 className="font-bold text-slate-700 flex items-center gap-2"><Tv size={18}/> 節目列表 (Programs)</h3><button onClick={() => { setEditingProgram({}); setIsProgramModalOpen(true); }} className="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-md font-bold hover:bg-slate-700 transition">Add Program</button></div>
-                <div className="p-0"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs"><tr><th className="px-5 py-3">節目名稱</th><th className="px-5 py-3">工作天數</th><th className="px-5 py-3">長度</th><th className="px-5 py-3">首播日</th><th className="px-5 py-3 text-right">操作</th></tr></thead><tbody className="divide-y divide-slate-100">{programs.map(p => (<tr key={p.id} className="hover:bg-slate-50/50 transition"><td className="px-5 py-3 font-semibold text-slate-700">{p.name}</td><td className="px-5 py-3 text-slate-500">{p.workDays} Days</td><td className="px-5 py-3 text-slate-500">{p.duration}</td><td className="px-5 py-3 text-slate-500"><span className="bg-slate-100 px-2 py-0.5 rounded text-xs">{p.premiereDay}</span></td><td className="px-5 py-3 text-right space-x-2"><button onClick={() => { setEditingProgram(p); setIsProgramModalOpen(true); }} className="text-indigo-600 hover:underline">Edit</button><button onClick={() => deleteProgram(p.id)} className="text-red-500 hover:underline">Del</button></td></tr>))}</tbody></table></div>
+                <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><h3 className="font-bold text-slate-700 flex items-center gap-2"><Tv size={18}/> 節目列表 (Programs)</h3><button onClick={() => { setEditingProgram({}); setIsProgramModalOpen(true); }} className="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-md font-bold hover:bg-slate-700 transition">Add</button></div>
+                <div className="p-0 overflow-x-auto"><table className="w-full text-left text-sm min-w-[600px]"><thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs"><tr><th className="px-5 py-3">節目名稱</th><th className="px-5 py-3">工作天數</th><th className="px-5 py-3">長度</th><th className="px-5 py-3">首播日</th><th className="px-5 py-3 text-right">操作</th></tr></thead><tbody className="divide-y divide-slate-100">{programs.map(p => (<tr key={p.id} className="hover:bg-slate-50/50 transition"><td className="px-5 py-3 font-semibold text-slate-700">{p.name}</td><td className="px-5 py-3 text-slate-500">{p.workDays} Days</td><td className="px-5 py-3 text-slate-500">{p.duration}</td><td className="px-5 py-3 text-slate-500"><span className="bg-slate-100 px-2 py-0.5 rounded text-xs">{p.premiereDay}</span></td><td className="px-5 py-3 text-right space-x-2"><button onClick={() => { setEditingProgram(p); setIsProgramModalOpen(true); }} className="text-indigo-600 hover:underline">Edit</button><button onClick={() => deleteProgram(p.id)} className="text-red-500 hover:underline">Del</button></td></tr>))}</tbody></table></div>
               </div>
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><h3 className="font-bold text-slate-700 flex items-center gap-2"><User size={18}/> 剪輯師 (Editors)</h3><button onClick={() => { setEditingEditor({}); setIsEditorModalOpen(true); }} className="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-md font-bold hover:bg-slate-700 transition">Add Editor</button></div>
+                <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><h3 className="font-bold text-slate-700 flex items-center gap-2"><User size={18}/> 剪輯師 (Editors)</h3><button onClick={() => { setEditingEditor({}); setIsEditorModalOpen(true); }} className="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-md font-bold hover:bg-slate-700 transition">Add</button></div>
                 <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   {displayEditors.map(e => {
                      const theme = getTheme(e.color);
                      return (
                       <div key={e.id} className="group relative border border-slate-200 rounded-xl p-4 hover:shadow-md transition bg-white">
                         <div className="flex justify-between items-start mb-2"><div className={`w-8 h-8 rounded-full ${theme.bar} flex items-center justify-center text-xs font-bold text-white opacity-80`}>{e.name[0]}</div><div className="flex gap-1 opacity-0 group-hover:opacity-100 transition"><button onClick={() => { setEditingEditor(e); setIsEditorModalOpen(true); }} className="p-1 hover:bg-slate-100 rounded"><Edit3 size={14} className="text-slate-500"/></button><button onClick={() => deleteEditor(e.id)} className="p-1 hover:bg-red-50 rounded"><Trash2 size={14} className="text-red-400"/></button></div></div>
-                        <p className="font-bold text-slate-700">{e.name}</p>
+                        <p className="font-bold text-slate-700 truncate">{e.name}</p>
                         <div className={`text-[10px] mt-2 inline-block px-1.5 py-0.5 rounded ${theme.pill}`}>Tag Color</div>
                       </div>
                     );
@@ -384,7 +420,7 @@ function App() {
         <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-100 overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-base text-slate-800">Task Details</h3><button onClick={() => setIsTaskModalOpen(false)}><X size={20} className="text-slate-400"/></button></div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                {editingTask.id && editingTask.startDate && editingTask.endDate && (
                 <div className={`p-2 rounded-md text-xs font-bold flex items-center gap-2 ${getTaskStatus(editingTask) === 'completed' ? 'bg-indigo-50 text-indigo-600' : getTaskStatus(editingTask) === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
                   {getTaskStatus(editingTask) === 'completed' ? <CheckCircle2 size={14}/> : getTaskStatus(editingTask) === 'active' ? <PlayCircle size={14}/> : <Clock size={14}/>}
@@ -408,6 +444,11 @@ function App() {
   );
 }
 
-const NavBtn = ({ icon, active, onClick, label }: any) => (<button onClick={onClick} className={`w-full flex flex-col items-center gap-1 p-2 rounded-xl transition-all group cursor-pointer ${active ? 'text-slate-800 bg-slate-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>{icon}<span className="text-[10px] font-bold opacity-80 group-hover:opacity-100">{label}</span></button>);
+const NavBtn = ({ icon, active, onClick, label }: any) => (
+  <button onClick={onClick} className={`w-full flex flex-col items-center gap-1 p-2 rounded-xl transition-all group cursor-pointer ${active ? 'text-slate-800 bg-slate-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
+    {icon}
+    <span className="text-[10px] font-bold opacity-80 group-hover:opacity-100">{label}</span>
+  </button>
+);
 
 export default App;
