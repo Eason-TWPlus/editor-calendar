@@ -10,7 +10,7 @@ import {
 import { zhTW } from 'date-fns/locale';
 import { 
   BarChart3, Settings, Plus, ChevronLeft, ChevronRight, 
-  Trash2, X, User, LayoutGrid, CheckCircle2, Clock, PlayCircle, Edit3, Film, Tv, Monitor, StickyNote, Calendar as CalendarIcon, RotateCcw, Menu
+  Trash2, X, User, LayoutGrid, CheckCircle2, Clock, PlayCircle, Edit3, Film, Tv, Monitor, StickyNote, Calendar as CalendarIcon, RotateCcw
 } from 'lucide-react';
 
 // --- 安全設定 ---
@@ -68,8 +68,7 @@ function App() {
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [statsDate, setStatsDate] = useState(new Date()); 
   const [view, setView] = useState<'calendar' | 'stats' | 'manage'>('calendar');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Partial<Task>>({});
   const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
@@ -175,39 +174,25 @@ function App() {
   const displayEditors = editors.length > 0 ? editors : FALLBACK_EDITORS;
 
   return (
-    // 🔥 使用 h-[100dvh] 解決手機瀏覽器高度問題
-    <div className="h-[100dvh] flex bg-white text-slate-700 font-sans selection:bg-slate-200 overflow-hidden">
+    <div className="h-[100dvh] flex flex-col md:flex-row bg-white text-slate-700 font-sans selection:bg-slate-200 overflow-hidden">
       
-      {/* --- Mobile Overlay (遮罩) --- */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] md:hidden animate-in fade-in duration-200"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* --- Sidebar (響應式) --- */}
-      <aside className={`
-        fixed md:static inset-y-0 left-0 z-[100] w-64 md:w-20 
-        bg-white border-r border-slate-100 flex flex-col items-center py-6 gap-4 shadow-2xl md:shadow-lg
-        transition-transform duration-300 ease-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
+      {/* 🔥 1. 電腦版側邊欄 (MD 以上顯示，手機隱藏) */}
+      <aside className="hidden md:flex w-20 bg-white border-r border-slate-100 flex-col items-center py-6 gap-4 z-50 shrink-0 shadow-lg">
         <div className="w-10 h-10 mb-4 flex items-center justify-center"><span className="font-black text-xl tracking-tighter text-slate-800">EF.</span></div>
         <nav className="flex flex-col gap-4 w-full px-2">
-          <NavBtn icon={<LayoutGrid size={24} />} label="Calendar" active={view === 'calendar'} onClick={() => { setView('calendar'); setIsMobileMenuOpen(false); }} />
-          <NavBtn icon={<BarChart3 size={24} />} label="Insights" active={view === 'stats'} onClick={() => { setView('stats'); setIsMobileMenuOpen(false); }} />
+          <NavBtn icon={<LayoutGrid size={24} />} label="Calendar" active={view === 'calendar'} onClick={() => setView('calendar')} />
+          <NavBtn icon={<BarChart3 size={24} />} label="Insights" active={view === 'stats'} onClick={() => setView('stats')} />
           <div className="flex-1"></div>
-          <NavBtn icon={<Settings size={24} />} label="Settings" active={view === 'manage'} onClick={() => { setView('manage'); setIsMobileMenuOpen(false); }} />
+          <NavBtn icon={<Settings size={24} />} label="Settings" active={view === 'manage'} onClick={() => setView('manage')} />
         </nav>
       </aside>
 
       {/* --- Main Content --- */}
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-        {/* Header */}
+        
+        {/* Header (手機版微調) */}
         <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 shrink-0 z-40 relative">
           <div className="flex items-center gap-3">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-50 rounded-lg active:scale-95 transition-transform"><Menu size={24} /></button>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-800 truncate">
               {view === 'calendar' && "Production"}
               {view === 'stats' && "Insights"}
@@ -233,12 +218,12 @@ function App() {
         {/* Scrollable Area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth z-0">
           
+          {/* 🔥 2. 行事曆容器：手機版底部增加高度 (pb-24)，避免被下方導航欄擋住 */}
           {view === 'calendar' && (
             <div className="flex flex-col h-full bg-white">
-              {/* 🔥 行事曆水平捲動容器 */}
               <div className="flex-1 overflow-auto">
-                {/* 🔥 設定最小寬度 + 底部留白(pb-24) 防止按鈕擋住 */}
-                <div className="min-w-[800px] h-full flex flex-col pb-24">
+                {/* 最小寬度 800px 確保不變形，底部留白增加 */}
+                <div className="min-w-[800px] h-full flex flex-col pb-24 md:pb-8">
                   <div className="grid grid-cols-7 border-b border-slate-100 sticky top-0 bg-white z-10">
                     {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => <div key={d} className="py-3 text-center text-[11px] font-medium text-slate-400 uppercase tracking-widest">{d}</div>)}
                   </div>
@@ -303,7 +288,6 @@ function App() {
                    </div>
                 </div>
               </div>
-              
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Clock className="text-slate-400"/> 月度概況 (Monthly)</h2>
@@ -316,7 +300,6 @@ function App() {
                     <button onClick={() => setStatsDate(addMonths(statsDate, 1))} className="p-1.5 hover:bg-slate-50 rounded text-slate-500 transition-colors"><ChevronRight size={16}/></button>
                   </div>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                       <div><p className="text-slate-400 text-sm uppercase font-bold tracking-wider mb-1">Monthly Programs</p><p className="text-4xl font-black tracking-tight text-indigo-600"><NumberTicker value={stats.monthlyCount} /></p></div>
@@ -369,18 +352,29 @@ function App() {
           )}
         </div>
         
-        {/* Floating Button (移高一點避免被手機底部擋住) */}
+        {/* Floating Button (手機版上移，避免被導航欄擋住) */}
         {view === 'calendar' && (
           <button 
             onClick={() => { setEditingTask({}); setIsTaskModalOpen(true); }} 
-            className="absolute bottom-8 right-6 md:bottom-8 md:right-8 bg-slate-800 hover:bg-slate-900 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 z-30"
+            className="absolute bottom-20 right-6 md:bottom-8 md:right-8 bg-slate-800 hover:bg-slate-900 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 z-30"
           >
             <Plus size={24} strokeWidth={2.5} />
           </button>
         )}
       </main>
 
-      {/* Modals (No Changes Needed, they are centered and z-50) */}
+      {/* 🔥 3. 手機版底部導航欄 (Bottom Navigation Bar) 
+          - md:hidden: 電腦版隱藏
+          - fixed bottom-0: 固定在底部
+          - pb-safe: 避開 iPhone 下方橫條
+      */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 flex justify-around items-center z-50 pb-safe shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+        <NavBtn icon={<LayoutGrid size={22} />} label="Calendar" active={view === 'calendar'} onClick={() => setView('calendar')} />
+        <NavBtn icon={<BarChart3 size={22} />} label="Insights" active={view === 'stats'} onClick={() => setView('stats')} />
+        <NavBtn icon={<Settings size={22} />} label="Settings" active={view === 'manage'} onClick={() => setView('manage')} />
+      </nav>
+
+      {/* Modals (保持不變) */}
       {isTaskModalOpen && (<div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"><div className="bg-white rounded-xl shadow-2xl w-full max-w-100 overflow-hidden animate-in zoom-in-95 duration-200"><div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-base text-slate-800">Task Details</h3><button onClick={() => setIsTaskModalOpen(false)}><X size={20} className="text-slate-400"/></button></div><div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">{editingTask.id && editingTask.startDate && editingTask.endDate && (<div className={`p-2 rounded-md text-xs font-bold flex items-center gap-2 ${getTaskStatus(editingTask) === 'completed' ? 'bg-indigo-50 text-indigo-600' : getTaskStatus(editingTask) === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{getTaskStatus(editingTask) === 'completed' ? <CheckCircle2 size={14}/> : getTaskStatus(editingTask) === 'active' ? <PlayCircle size={14}/> : <Clock size={14}/>}{getTaskStatus(editingTask) === 'completed' ? '已完成' : getTaskStatus(editingTask) === 'active' ? '進行中' : '未開始'}</div>)}<div className="space-y-1"><label className="block text-[11px] font-bold text-slate-500 uppercase">節目</label><select className="w-full p-2 bg-white border border-slate-200 rounded-md text-sm" value={editingTask.show || ''} onChange={e => setEditingTask({...editingTask, show: e.target.value})}><option value="" disabled>選擇節目...</option>{programs.map(p => <option key={p.id} value={p.name}>{p.name} ({p.duration})</option>)}</select></div><div className="grid grid-cols-5 gap-3"><div className="col-span-2 space-y-1"><label className="block text-[11px] font-bold text-slate-500 uppercase">集數</label><input type="text" className="w-full p-2 border border-slate-200 rounded-md text-sm" value={editingTask.episode || ''} onChange={e => setEditingTask({...editingTask, episode: e.target.value})} /></div><div className="col-span-3 space-y-1"><label className="block text-[11px] font-bold text-slate-500 uppercase">剪輯師</label><select className="w-full p-2 bg-white border border-slate-200 rounded-md text-sm" value={editingTask.editor || ''} onChange={e => setEditingTask({...editingTask, editor: e.target.value})}><option value="" disabled>選擇...</option>{displayEditors.map(e => <option key={e.name} value={e.name}>{e.name}</option>)}</select></div></div><div className="grid grid-cols-2 gap-3"><div className="space-y-1"><label className="block text-[11px] font-bold text-slate-500 uppercase">開始</label><input type="date" className="w-full p-2 border border-slate-200 rounded-md text-sm" value={editingTask.startDate || ''} onChange={e => setEditingTask({...editingTask, startDate: e.target.value})} /></div><div className="space-y-1"><label className="block text-[11px] font-bold text-slate-500 uppercase">結束</label><input type="date" className="w-full p-2 border border-slate-200 rounded-md text-sm" value={editingTask.endDate || ''} onChange={e => setEditingTask({...editingTask, endDate: e.target.value})} /></div></div><div className="space-y-1"><label className="block text-[11px] font-bold text-slate-500 uppercase">備註 (Note)</label><textarea className="w-full p-2 border border-slate-200 rounded-md text-sm h-20 resize-none outline-none focus:border-slate-400 transition" placeholder="輸入備註..." value={editingTask.note || ''} onChange={e => setEditingTask({...editingTask, note: e.target.value})} /></div></div><div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between">{editingTask.id ? <button onClick={() => deleteTask(editingTask.id!)} className="text-red-500 hover:bg-red-50 px-2 rounded"><Trash2 size={16}/></button> : <div/>} <div className="flex gap-2"><button onClick={() => setIsTaskModalOpen(false)} className="px-4 py-1.5 text-sm font-bold text-slate-500">Cancel</button><button onClick={saveTask} className="bg-slate-800 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow-sm">Save</button></div></div></div></div>)}
       {isProgramModalOpen && (<div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"><div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"><div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-slate-800">Edit Program</h3><button onClick={() => setIsProgramModalOpen(false)}><X size={20}/></button></div><div className="p-5 space-y-4"><div><label className="text-xs font-bold text-slate-500 uppercase">名稱</label><input className="w-full p-2 border rounded mt-1 text-sm" value={editingProgram.name || ''} onChange={e => setEditingProgram({...editingProgram, name: e.target.value})} /></div><div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-slate-500 uppercase">長度</label><input className="w-full p-2 border rounded mt-1 text-sm" placeholder="e.g. 10min" value={editingProgram.duration || ''} onChange={e => setEditingProgram({...editingProgram, duration: e.target.value})} /></div><div><label className="text-xs font-bold text-slate-500 uppercase">工作天</label><input type="number" className="w-full p-2 border rounded mt-1 text-sm" value={editingProgram.workDays || ''} onChange={e => setEditingProgram({...editingProgram, workDays: Number(e.target.value)})} /></div></div><div><label className="text-xs font-bold text-slate-500 uppercase">首播日</label><input className="w-full p-2 border rounded mt-1 text-sm" placeholder="e.g. 週五" value={editingProgram.premiereDay || ''} onChange={e => setEditingProgram({...editingProgram, premiereDay: e.target.value})} /></div></div><div className="px-5 py-3 bg-slate-50 border-t flex justify-end gap-2"><button onClick={() => setIsProgramModalOpen(false)} className="px-3 py-1 text-sm font-bold text-slate-500">Cancel</button><button onClick={saveProgram} className="bg-slate-800 text-white px-4 py-1.5 rounded text-sm font-bold">Save</button></div></div></div>)}
       {isEditorModalOpen && (<div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"><div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200"><div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center"><h3 className="font-bold text-slate-800">Edit Editor</h3><button onClick={() => setIsEditorModalOpen(false)}><X size={20}/></button></div><div className="p-5 space-y-4"><div><label className="text-xs font-bold text-slate-500 uppercase">姓名</label><input className="w-full p-2 border rounded mt-1 text-sm" value={editingEditor.name || ''} onChange={e => setEditingEditor({...editingEditor, name: e.target.value})} /></div><div><label className="text-xs font-bold text-slate-500 uppercase">代表色</label><div className="grid grid-cols-4 gap-2 mt-2">{COLOR_OPTIONS.map(c => (<button key={c.label} onClick={() => setEditingEditor({...editingEditor, color: c.value})} className={`h-8 rounded border-2 transition ${editingEditor.color === c.value ? 'border-slate-800' : 'border-transparent'} ${c.value.split(' ')[0]}`}></button>))}</div></div></div><div className="px-5 py-3 bg-slate-50 border-t flex justify-end gap-2"><button onClick={() => setIsEditorModalOpen(false)} className="px-3 py-1 text-sm font-bold text-slate-500">Cancel</button><button onClick={saveEditor} className="bg-slate-800 text-white px-4 py-1.5 rounded text-sm font-bold">Save</button></div></div></div>)}
@@ -389,7 +383,7 @@ function App() {
 }
 
 const NavBtn = ({ icon, active, onClick, label }: any) => (
-  <button onClick={onClick} className={`w-full flex flex-col items-center gap-1 p-2 rounded-xl transition-all group cursor-pointer ${active ? 'text-slate-800 bg-slate-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
+  <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all group cursor-pointer ${active ? 'text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}>
     {icon}
     <span className="text-[10px] font-bold opacity-80 group-hover:opacity-100">{label}</span>
   </button>
